@@ -19,4 +19,4 @@ override.tf.json
 *.tfvars
 
 # Exculde private ssh keys
-terraform
+ssh_users_private_keys

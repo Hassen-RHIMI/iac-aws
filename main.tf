@@ -6,7 +6,7 @@ provider "aws" {
  
  resource "aws_key_pair" "my_ec2" {
          key_name = "terraform-key"
-         public_key = file("./terraform.pub")
+         public_key = file("${path.module}/ssh_users_public_keys/terraform.pub")
  }
 
 resource "aws_security_group" "instance_sg"{
@@ -32,6 +32,7 @@ resource "aws_security_group" "instance_sg"{
         cidr_blocks = ["91.173.75.183/32"]
     }
 }
+
 resource "aws_instance" "my_ec2_instance" {
     ami = var.AWS_AMI[var.AWS_REGION]
     instance_type = "t2.micro"
@@ -41,12 +42,20 @@ resource "aws_instance" "my_ec2_instance" {
     connection {
         type = "ssh"
         user = "centos"
-        private_key = file("${path.module}/terraform")
+        private_key = file("${path.module}/ssh_users_private_keys/terraform")
         host = self.public_ip
     }
     tags = {
         Name = "Terraform_test"
     }
+   provisioner "file" {
+        source = "${path.module}/ssh_users_public_keys/"
+        destination = "/tmp"
+   }
+    provisioner "file" {
+        source = "${path.module}/ssh_user_accounts.sh"
+        destination = "/tmp/ssh_user_accounts.sh"
+   }
    provisioner "remote-exec" {
           inline = [
           "sudo yum -y update",
@@ -55,6 +64,9 @@ resource "aws_instance" "my_ec2_instance" {
           "sudo systemctl enable httpd",
           "sudo sh -c 'echo \"<h1>Mon adresse ip est ${aws_instance.my_ec2_instance.public_ip}</h1>\" > /var/www/html/index.html'",
         ]
+   }
+   provisioner "remote-exec" {
+         inline = ["sudo sh /tmp/ssh_user_accounts.sh"]
    }
 }
 
