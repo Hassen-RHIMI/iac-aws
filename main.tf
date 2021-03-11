@@ -67,7 +67,9 @@ resource "aws_instance" "my_ec2_instance" {
    }
    provisioner "remote-exec" {
          inline = ["sudo sh /tmp/ssh_user_accounts.sh"]
+         on_failure = continue
    }
+ 
 }
 
 output "public_ip"{
