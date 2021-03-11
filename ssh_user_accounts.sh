@@ -17,7 +17,7 @@ create_user_account(){
 }
 fix_permissions(){
     chown -R $1:$1 /home/$1/.ssh
-    chmod 0755 /home/$1/.ssh && sudo chmod 0600  /home/$1/.ssh/authorized_keys
+    chmod 0700 /home/$1/.ssh && sudo chmod 0600  /home/$1/.ssh/authorized_keys
 }
 disable_password_ask(){
     echo "$1 ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/$user > /dev/null 2>&1
