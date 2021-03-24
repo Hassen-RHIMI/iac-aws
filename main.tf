@@ -1,7 +1,15 @@
+terraform {
+    backend "s3"{
+        bucket = "terraform-bucket-aws-s3"
+        key = "states/terraform.state"
+        region = "us-east-2"
+    }
+}
 provider "aws" {
     region = var.AWS_REGION
-    access_key = var.AWS_ACCESS_KEY
-    secret_key = var.AWS_SECRET_KEY
+    # Set Authentification keys on aws cli configuration 
+    # access_key = var.AWS_ACCESS_KEY
+    # secret_key = var.AWS_SECRET_KEY
  }
  
  resource "aws_key_pair" "my_ec2" {
