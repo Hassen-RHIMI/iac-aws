@@ -12,7 +12,7 @@ provider "aws" {
     # secret_key = var.AWS_SECRET_KEY
  }
  
- resource "aws_key_pair" "my_ec2" {
+ resource "aws_key_pair" "dev01_ec2_vm01_key" {
          key_name = "terraform-key"
          public_key = file("${path.module}/ssh_users_public_keys/terraform.pub")
  }
@@ -41,11 +41,11 @@ resource "aws_security_group" "instance_sg"{
     }
 }
 
-resource "aws_instance" "my_ec2_instance" {
+resource "aws_instance" "dev01_ec2_vm01" {
     ami = var.AWS_AMI[var.AWS_REGION]
     instance_type = "t2.micro"
     vpc_security_group_ids = [aws_security_group.instance_sg.id]
-    key_name = aws_key_pair.my_ec2.key_name
+    key_name = aws_key_pair.dev01_ec2_vm01_key.key_name
 
     connection {
         type = "ssh"
@@ -54,7 +54,7 @@ resource "aws_instance" "my_ec2_instance" {
         host = self.public_ip
     }
     tags = {
-        Name = "Terraform_test"
+        Name = terraform.workspace == "qual" ? "qual01_ec2_vm01" : "dev01_ec2_vm01"
     }
    provisioner "file" {
         source = "${path.module}/ssh_users_public_keys/"
@@ -70,7 +70,7 @@ resource "aws_instance" "my_ec2_instance" {
           "sudo yum -y install httpd",
           "sudo systemctl start httpd",
           "sudo systemctl enable httpd",
-          "sudo sh -c 'echo \"<h1>Mon adresse ip est ${aws_instance.my_ec2_instance.public_ip}</h1>\" > /var/www/html/index.html'",
+          "sudo sh -c 'echo \"<h1>Mon adresse ip est ${aws_instance.dev01_ec2_vm01.public_ip}</h1>\" > /var/www/html/index.html'",
         ]
    }
    provisioner "remote-exec" {
@@ -81,7 +81,7 @@ resource "aws_instance" "my_ec2_instance" {
 }
 
 output "public_ip"{
-    value = aws_instance.my_ec2_instance.public_ip
+    value = aws_instance.dev01_ec2_vm01.public_ip
 }
 
 
