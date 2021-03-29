@@ -5,6 +5,12 @@ terraform {
         region = "us-east-2"
     }
 }
+locals {
+    environment = terraform.workspace == "qual" ? "qual" : "dev"
+    key_pair_name = terraform.workspace == "qual" ? "qual-key" : "dev-key"
+    sg_name = terraform.workspace == "qual" ? "qual-sg" : "dev-sg"
+    instance_name = terraform.workspace == "qual" ? "qual01_ec2_vm01" : "dev01_ec2_vm01"
+}
 provider "aws" {
     region = var.AWS_REGION
     # Set Authentification keys on aws cli configuration 
@@ -12,13 +18,17 @@ provider "aws" {
     # secret_key = var.AWS_SECRET_KEY
  }
  
- resource "aws_key_pair" "dev01_ec2_vm01_key" {
-         key_name = "terraform-key"
+ resource "aws_key_pair" "ec2_key_access" {
+         key_name = local.key_pair_name
          public_key = file("${path.module}/ssh_users_public_keys/terraform.pub")
+         tags = {
+             env = local.environment
+         }
+         
  }
 
 resource "aws_security_group" "instance_sg"{
-    name = "terraform-test-sg"
+    name = local.sg_name
 
     egress {
          from_port = 0
@@ -39,13 +49,16 @@ resource "aws_security_group" "instance_sg"{
         protocol = "tcp"
         cidr_blocks = ["91.173.75.183/32"]
     }
+    tags = {
+             env = local.environment
+         }
 }
 
-resource "aws_instance" "dev01_ec2_vm01" {
+resource "aws_instance" "ec2_instance" {
     ami = var.AWS_AMI[var.AWS_REGION]
     instance_type = "t2.micro"
     vpc_security_group_ids = [aws_security_group.instance_sg.id]
-    key_name = aws_key_pair.dev01_ec2_vm01_key.key_name
+    key_name = aws_key_pair.ec2_key_access.key_name
 
     connection {
         type = "ssh"
@@ -54,7 +67,7 @@ resource "aws_instance" "dev01_ec2_vm01" {
         host = self.public_ip
     }
     tags = {
-        Name = terraform.workspace == "qual" ? "qual01_ec2_vm01" : "dev01_ec2_vm01"
+        Name = local.instance_name
     }
    provisioner "file" {
         source = "${path.module}/ssh_users_public_keys/"
@@ -70,7 +83,7 @@ resource "aws_instance" "dev01_ec2_vm01" {
           "sudo yum -y install httpd",
           "sudo systemctl start httpd",
           "sudo systemctl enable httpd",
-          "sudo sh -c 'echo \"<h1>Mon adresse ip est ${aws_instance.dev01_ec2_vm01.public_ip}</h1>\" > /var/www/html/index.html'",
+          "sudo sh -c 'echo \"<h1>Mon adresse ip est ${aws_instance.ec2_instance.public_ip}</h1>\" > /var/www/html/index.html'",
         ]
    }
    provisioner "remote-exec" {
@@ -81,7 +94,7 @@ resource "aws_instance" "dev01_ec2_vm01" {
 }
 
 output "public_ip"{
-    value = aws_instance.dev01_ec2_vm01.public_ip
+    value = aws_instance.ec2_instance.public_ip
 }
 
 
