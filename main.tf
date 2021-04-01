@@ -11,6 +11,10 @@ locals {
     sg_name = terraform.workspace == "qual" ? "qual-sg" : "dev-sg"
     instance_name = terraform.workspace == "qual" ? "qual01_ec2_vm01" : "dev01_ec2_vm01"
 }
+data "aws_ami" "centos_ami" {
+    most_recent = true
+    owners = ["099720109477"]
+}
 provider "aws" {
     region = var.AWS_REGION
     # Set Authentification keys on aws cli configuration 
@@ -55,8 +59,8 @@ resource "aws_security_group" "instance_sg"{
 }
 
 resource "aws_instance" "ec2_instance" {
-    ami = var.AWS_AMI[var.AWS_REGION]
-    instance_type = "t2.micro"
+    ami = data.aws_ami.centos_ami.id
+    instance_type = "t3.micro"
     vpc_security_group_ids = [aws_security_group.instance_sg.id]
     key_name = aws_key_pair.ec2_key_access.key_name
 
