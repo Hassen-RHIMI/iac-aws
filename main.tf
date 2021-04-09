@@ -11,9 +11,17 @@ locals {
     sg_name = terraform.workspace == "qual" ? "qual-sg" : "dev-sg"
     instance_name = terraform.workspace == "qual" ? "qual01_ec2_vm01" : "dev01_ec2_vm01"
 }
-data "aws_ami" "centos_ami" {
+data "aws_ami" "centos-ami" {
     most_recent = true
-    owners = ["099720109477"]
+    filter {
+        name = "architecture"
+        values = ["x86_64"]
+    }
+    filter {
+        name   = "name"
+        values = ["CentOS Stream 8 x86_64"]
+    }
+    owners = ["125523088429"]
 }
 provider "aws" {
     region = var.AWS_REGION
@@ -59,16 +67,17 @@ resource "aws_security_group" "instance_sg"{
 }
 
 resource "aws_instance" "ec2_instance" {
-    ami = data.aws_ami.centos_ami.id
-    instance_type = "t3.micro"
+    ami = data.aws_ami.centos-ami.id
+    instance_type = "t2.micro"
     vpc_security_group_ids = [aws_security_group.instance_sg.id]
     key_name = aws_key_pair.ec2_key_access.key_name
 
     connection {
         type = "ssh"
         user = "centos"
-        private_key = file("${path.module}/ssh_users_private_keys/terraform")
+      //  private_key = file("${path.module}/ssh_users_private_keys/terraform")
         host = self.public_ip
+        agent = true
     }
     tags = {
         Name = local.instance_name
