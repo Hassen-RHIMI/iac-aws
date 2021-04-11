@@ -5,11 +5,15 @@ terraform {
         region = "us-east-2"
     }
 }
+provider "aws" {
+    region = var.AWS_REGION
+ }
 locals {
     environment = terraform.workspace == "qual" ? "qual" : "dev"
     key_pair_name = terraform.workspace == "qual" ? "qual-key" : "dev-key"
     sg_name = terraform.workspace == "qual" ? "qual-sg" : "dev-sg"
     instance_name = terraform.workspace == "qual" ? "qual01_ec2_vm01" : "dev01_ec2_vm01"
+    
 }
 data "aws_ami" "centos-ami" {
     most_recent = true
@@ -23,20 +27,12 @@ data "aws_ami" "centos-ami" {
     }
     owners = ["125523088429"]
 }
-provider "aws" {
-    region = var.AWS_REGION
-    # Set Authentification keys on aws cli configuration 
-    # access_key = var.AWS_ACCESS_KEY
-    # secret_key = var.AWS_SECRET_KEY
- }
- 
  resource "aws_key_pair" "ec2_key_access" {
          key_name = local.key_pair_name
          public_key = file("${path.module}/ssh_users_public_keys/terraform.pub")
          tags = {
              env = local.environment
-         }
-         
+         }   
  }
 
 resource "aws_security_group" "instance_sg"{
@@ -105,10 +101,4 @@ resource "aws_instance" "ec2_instance" {
    }
  
 }
-
-output "public_ip"{
-    value = aws_instance.ec2_instance.public_ip
-}
-
-
 
