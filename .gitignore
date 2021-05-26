@@ -17,6 +17,6 @@ override.tf.json
 # to change depending on the environment.
 #
 *.tfvars
-
+policy.json
 # Exculde private ssh keys
 ssh_users_private_keys
