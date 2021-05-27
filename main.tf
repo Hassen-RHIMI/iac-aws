@@ -103,6 +103,6 @@ resource "aws_instance" "ec2_instance" {
 }
 module "website_s3_bucket" {
     source = "./modules/aws-s3-static-website"
-    bucket_name= "monwebsite-test"
+    bucket_name= "website-monwebsite"
 }
 
